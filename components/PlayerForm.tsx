@@ -6,7 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Minus, Users, Zap } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Plus, Minus, Users, Zap, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Player } from '@/lib/types';
 
 export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
   const {
@@ -14,6 +24,7 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
     updatePlayer,
     addPlayers,
     removePlayers,
+    importPlayers,
     useTiers,
     useFixedPairs,
     setUseTiers,
@@ -22,14 +33,78 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
   } = useTournamentStore();
 
   const [loading, setLoading] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState(
+    JSON.stringify(["Thư", "Thuận", "Lộc", "Phú", "Meo", "Kiệt", "Triển", "Nghĩa", "Phát", "Phúc", "Hậu", "Tân", "Ngọc", "Thanh"], null, 2)
+  );
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   const validPlayers = players.filter(p => p.name.trim() !== '');
   const totalTeams = validPlayers.length / 2;
   const teamsPerGroup = Math.ceil(totalTeams / 2); // Allow odd teams, A gets extra
 
+  // Calculate unpaired and paired players for the 2-column UI
+  const unpairedPlayers = validPlayers.filter(p => !p.partnerId);
+  
+  const pairedGroups: [Player, Player][] = [];
+  const processedPairedIds = new Set<string>();
+  
+  validPlayers.forEach(p => {
+    if (p.partnerId && !processedPairedIds.has(p.id)) {
+      const partner = validPlayers.find(v => v.id === p.partnerId);
+      if (partner) {
+        pairedGroups.push([p, partner]);
+        processedPairedIds.add(p.id);
+        processedPairedIds.add(partner.id);
+      }
+    }
+  });
+
   const canGenerate =
     validPlayers.length >= 4 &&
     validPlayers.length % 2 === 0; // Only check player count is even
+
+  const handlePlayerTap = (playerId: string) => {
+    if (selectedPlayerId === playerId) {
+      setSelectedPlayerId(null); // Deselect
+      return;
+    }
+
+    if (!selectedPlayerId) {
+      setSelectedPlayerId(playerId); // Select first
+    } else {
+      // Pair them
+      const p1 = selectedPlayerId;
+      const p2 = playerId;
+      
+      updatePlayer(p1, { partnerId: p2, isFixed: true });
+      updatePlayer(p2, { partnerId: p1, isFixed: true });
+      setSelectedPlayerId(null);
+    }
+  };
+
+  const handleUnpair = (p1: Player, p2: Player) => {
+    if (confirm(`Hủy ghép cặp ${p1.name} - ${p2.name}?`)) {
+      updatePlayer(p1.id, { partnerId: undefined, isFixed: false });
+      updatePlayer(p2.id, { partnerId: undefined, isFixed: false });
+    }
+  };
+
+  const handleImport = () => {
+    try {
+      const names = JSON.parse(importText);
+      
+      if (!Array.isArray(names) || names.length === 0 || !names.every(n => typeof n === 'string')) {
+        alert('Dữ liệu không hợp lệ. Vui lòng nhập mảng JSON tên VĐV.');
+        return;
+      }
+      
+      importPlayers(names);
+      setImportOpen(false);
+    } catch (error) {
+      alert('Dữ liệu không hợp lệ. Vui lòng nhập mảng JSON tên VĐV.');
+    }
+  };
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
@@ -59,6 +134,42 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
             Nhập thông tin VĐV để bắt đầu
           </p>
         </div>
+
+        {/* Quick Import Button */}
+        <div className="mb-4">
+          <Button
+            onClick={() => setImportOpen(true)}
+            variant="outline"
+            className="w-full touch-target"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            📋 Nhập Nhanh Danh Sách
+          </Button>
+        </div>
+
+        {/* Quick Import Dialog */}
+        <Dialog open={importOpen} onOpenChange={setImportOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nhập Nhanh Danh Sách VĐV</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                rows={6}
+                className="w-full p-3 rounded-lg border border-input bg-background text-sm font-mono"
+                placeholder='["Tên 1", "Tên 2", ...]'
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Hủy</Button>
+              </DialogClose>
+              <Button onClick={handleImport}>Nhập</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Player Count Info & Controls */}
         <div className="flex flex-col gap-4 mb-6">
@@ -174,59 +285,78 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
                   </div>
                 )}
 
-                {useFixedPairs && player.name.trim() !== '' && (
-                  <div className="pl-11">
-                    <select
-                      value={player.partnerId || ''}
-                      onChange={(e) => {
-                        const partnerId = e.target.value;
-                        if (partnerId) {
-                          // Set this player's partner
-                          updatePlayer(player.id, {
-                            partnerId,
-                            isFixed: true,
-                          });
-                          // Set reverse relationship
-                          updatePlayer(partnerId, {
-                            partnerId: player.id,
-                            isFixed: true,
-                          });
-                        } else {
-                          // Clear partnership
-                          updatePlayer(player.id, {
-                            partnerId: undefined,
-                            isFixed: false,
-                          });
-                        }
-                      }}
-                      className="w-full p-2 rounded-lg border border-input bg-background text-sm"
-                    >
-                      <option value="">-- Chọn đồng đội --</option>
-                      {players
-                        .filter(
-                          (p) =>
-                            p.id !== player.id &&
-                            p.name.trim() !== '' &&
-                            (!p.partnerId || p.partnerId === player.id)
-                        )
-                        .map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                            {p.partnerId === player.id ? ' ✓' : ''}
-                          </option>
-                        ))}
-                    </select>
-                    {player.partnerId && (
-                      <div className="text-xs text-primary mt-1 flex items-center gap-1">
-                        🔗 Cặp với: {players.find(p => p.id === player.partnerId)?.name}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </Card>
           ))}
         </div>
+
+        {/* Fixed Pairs Selection UI - Two Column Layout */}
+        {useFixedPairs && validPlayers.length > 0 && (
+          <div className="court-card p-4 mb-6">
+            <h3 className="text-lg font-bold text-primary mb-4">Ghép cặp cố định</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left Column: Unpaired */}
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  Chưa ghép ({unpairedPlayers.length})
+                </div>
+                <div className="space-y-2">
+                  {unpairedPlayers.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => handlePlayerTap(p.id)}
+                      className={cn(
+                        "px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer touch-target transition-all",
+                        selectedPlayerId === p.id 
+                          ? "ring-2 ring-primary bg-primary/10 border-primary"
+                          : "bg-secondary/50 border-transparent hover:bg-secondary"
+                      )}
+                    >
+                      {p.name}
+                    </div>
+                  ))}
+                  {unpairedPlayers.length === 0 && (
+                    <div className="text-xs text-muted-foreground italic py-2">
+                      Đã ghép hết
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Paired */}
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  Đã ghép ({pairedGroups.length})
+                </div>
+                <div className="space-y-2">
+                  {pairedGroups.map(([p1, p2]) => (
+                    <div
+                      key={p1.id}
+                      onClick={() => handleUnpair(p1, p2)}
+                      className="flex flex-col gap-1 p-2 rounded-lg bg-emerald-50 border border-emerald-200 cursor-pointer touch-target hover:bg-emerald-100 transition-colors"
+                    >
+                      <div className="text-sm font-bold text-emerald-800 flex items-center gap-1">
+                        <span className="truncate max-w-[45%]">{p1.name}</span>
+                        <span className="text-emerald-500 shrink-0">🔗</span>
+                        <span className="truncate max-w-[45%]">{p2.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {pairedGroups.length === 0 && (
+                    <div className="text-xs text-muted-foreground italic py-2">
+                      Chưa có cặp nào
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-xs text-muted-foreground bg-primary/5 p-2 rounded border border-primary/10">
+              💡 Chạm vào tên để chọn/ghép cặp. Chạm vào cặp đã ghép để hủy.
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="space-y-3 mb-6">
