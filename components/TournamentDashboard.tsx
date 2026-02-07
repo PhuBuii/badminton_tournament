@@ -36,8 +36,6 @@ export default function TournamentDashboard() {
 
   const allGroupFinished = groupMatches.every(m => m.status === 'finished');
   const canStartKnockout = allGroupFinished && semiMatches.length === 0;
-  const allSemiFinished = semiMatches.every(m => m.status === 'finished');
-  const canStartFinals = allSemiFinished && !finalMatch;
 
   const finishedGroupCount = groupMatches.filter(m => m.status === 'finished').length;
   const nextMatchId = matches.find(m => m.status !== 'finished')?.id;
@@ -49,7 +47,7 @@ export default function TournamentDashboard() {
 
     // Auto-advance logic
     setTimeout(() => {
-      const { matches, currentStage } = useTournamentStore.getState();
+      const { matches } = useTournamentStore.getState();
       const groupMatches = matches.filter(m => m.stage === 'Group');
       const semiMatches = matches.filter(m => m.stage === 'Semi');
       
@@ -314,7 +312,7 @@ export default function TournamentDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <BracketView teams={teams} matches={matches} getRankedTeams={getRankedTeams} />
+            <BracketView teams={teams} matches={matches} />
           </TabsContent>
         </Tabs>
       </div>

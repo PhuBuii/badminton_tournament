@@ -1,6 +1,6 @@
 'use client';
 
-import { Team, Match, Player } from '@/lib/types';
+import { Team, Match } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -9,10 +9,9 @@ import { Trophy, Medal } from 'lucide-react';
 interface BracketViewProps {
   teams: Team[];
   matches: Match[];
-  getRankedTeams: (group: 'A' | 'B') => Team[];
 }
 
-export default function BracketView({ teams, matches, getRankedTeams }: BracketViewProps) {
+export default function BracketView({ teams, matches }: BracketViewProps) {
   const semiMatches = matches.filter(m => m.stage === 'Semi');
   const finalMatch = matches.find(m => m.stage === 'Final');
   const thirdPlaceMatch = matches.find(m => m.stage === 'ThirdPlace');
@@ -124,8 +123,8 @@ export default function BracketView({ teams, matches, getRankedTeams }: BracketV
   // Or just display them in order if they exist.
   // If not exist, we just render placeholders.
   
-  let semi1Match = semiMatches[0];
-  let semi2Match = semiMatches[1];
+  const semi1Match = semiMatches[0];
+  const semi2Match = semiMatches[1];
 
   // Try to sort semis to be consistent: Semi 1 (1A vs 2B) usually first
   if (semiMatches.length === 2) {
