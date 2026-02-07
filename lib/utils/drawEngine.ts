@@ -18,14 +18,21 @@ export function generateTournament(players: Player[]): Team[] {
   const teams = createTeams(players);
 
   // Step 2: Shuffle and assign groups
-  // If odd, Group A has 1 more team
+  // If odd, Group A gets fewer teams (e.g., 7 teams → A=3, B=4)
   const shuffledTeams = shuffleArray([...teams]);
-  const halfPoint = Math.ceil(totalTeams / 2);
+  const halfPoint = Math.floor(totalTeams / 2);
 
-  const assignedTeams = shuffledTeams.map((team, index) => ({
-    ...team,
-    group: (index < halfPoint ? 'A' : 'B') as 'A' | 'B',
-  }));
+  // Track group counters for team numbering
+  const groupCounters = { A: 0, B: 0 };
+  const assignedTeams = shuffledTeams.map((team, index) => {
+    const group = (index < halfPoint ? 'A' : 'B') as 'A' | 'B';
+    groupCounters[group]++;
+    return {
+      ...team,
+      group,
+      teamNumber: `${group}${groupCounters[group]}`,
+    };
+  });
 
   return assignedTeams;
 }

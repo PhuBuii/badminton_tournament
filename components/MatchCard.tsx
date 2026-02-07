@@ -49,9 +49,10 @@ export default function MatchCard({ match, team1, team2, onSave }: MatchCardProp
       {/* Match Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          {match.stage === 'Group' && match.round && (
+          {match.stage === 'Group' && (
             <Badge variant="outline" className="text-xs">
-              Trận {match.round}
+              {match.round ? `Lượt ${match.round}` : 'Vòng bảng'}
+              {match.court ? ` • Sân ${match.court}` : ''}
             </Badge>
           )}
           {match.stage === 'Semi' && (
