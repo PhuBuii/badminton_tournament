@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Team } from '@/lib/types';
 import { Trophy, Medal, UserX } from 'lucide-react';
 import { useTournamentStore } from '@/lib/store/useTournamentStore';
+import { areGroupMatchesComplete } from '@/lib/utils/groupCompletion';
 
 interface LeaderboardProps {
   teams: Team[];
@@ -20,7 +21,7 @@ interface LeaderboardProps {
 }
 
 export default function Leaderboard({ teams, group }: LeaderboardProps) {
-  const { disqualifyTeam } = useTournamentStore();
+  const { disqualifyTeam, matches: allMatches, teams: allTeams } = useTournamentStore();
 
   if (teams.length === 0) {
     return (
@@ -35,6 +36,9 @@ export default function Leaderboard({ teams, group }: LeaderboardProps) {
       disqualifyTeam(teamId);
     }
   };
+
+  // Check if all group matches are complete for this group
+  const allGroupFinished = areGroupMatchesComplete(allMatches, group, allTeams);
 
   return (
     <div>
@@ -71,13 +75,13 @@ export default function Leaderboard({ teams, group }: LeaderboardProps) {
               // Simple calculation: if points >= 0, wins = points/3, else wins = 0
               const wins = team.points >= 0 ? Math.round(team.points / 3) : 0;
               const losses = totalMatches - wins;
-              const qualified = index < 2;
+              const qualified = index < 2 && allGroupFinished;
               const teamName = `${team.players[0].name} & ${team.players[1].name}`;
 
               return (
                 <TableRow
                   key={team.id}
-                  className={qualified ? 'bg-accent/20 font-medium' : ''}
+                  className={qualified ? 'bg-emerald-50 border-l-4 border-emerald-500 font-medium' : ''}
                 >
                   <TableCell className="font-semibold">
                     <div className="flex items-center gap-1">
