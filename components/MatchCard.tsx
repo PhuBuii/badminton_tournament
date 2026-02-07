@@ -14,9 +14,10 @@ interface MatchCardProps {
   team1: Team;
   team2: Team;
   onSave: (matchId: string, score1: number, score2: number) => void;
+  isNext?: boolean;
 }
 
-export default function MatchCard({ match, team1, team2, onSave }: MatchCardProps) {
+export default function MatchCard({ match, team1, team2, onSave, isNext = false }: MatchCardProps) {
   const [score1, setScore1] = useState(match.score1?.toString() || '');
   const [score2, setScore2] = useState(match.score2?.toString() || '');
   const [isEditing, setIsEditing] = useState(false);
@@ -45,10 +46,16 @@ export default function MatchCard({ match, team1, team2, onSave }: MatchCardProp
     : null;
 
   return (
-    <Card className={`p-4 ${isFinished ? 'bg-muted/30' : 'court-card'}`}>
+    <Card className={`p-4 ${
+      isFinished 
+        ? 'bg-muted/40 opacity-75 shadow-none border-transparent' 
+        : isNext 
+          ? 'court-card animate-border-pulse ring-offset-2 ring-offset-background' 
+          : 'court-card'
+    }`}>
       {/* Match Header */}
       <div className="flex items-center justify-between mb-4">
-        <div>
+        <div className="flex items-center gap-2">
           {match.stage === 'Group' && (
             <Badge variant="outline" className="text-xs">
               {match.round ? `Lượt ${match.round}` : 'Vòng bảng'}
@@ -67,6 +74,11 @@ export default function MatchCard({ match, team1, team2, onSave }: MatchCardProp
           {match.stage === 'Placement' && match.round && (
             <Badge variant="outline" className="text-xs">
               Tranh Hạng {(match.round - 1) * 2 + 1}-{(match.round - 1) * 2 + 2}
+            </Badge>
+          )}
+          {isNext && !isFinished && (
+            <Badge className="bg-accent text-accent-foreground animate-pulse ml-1">
+              Sắp đấu
             </Badge>
           )}
         </div>

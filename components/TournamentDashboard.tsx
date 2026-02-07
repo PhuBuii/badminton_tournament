@@ -39,6 +39,9 @@ export default function TournamentDashboard() {
   const allSemiFinished = semiMatches.every(m => m.status === 'finished');
   const canStartFinals = allSemiFinished && !finalMatch;
 
+  const finishedGroupCount = groupMatches.filter(m => m.status === 'finished').length;
+  const nextMatchId = matches.find(m => m.status !== 'finished')?.id;
+
   const getTeam = (id: string) => teams.find(t => t.id === id);
 
   const handleScoreUpdate = (matchId: string, score1: number, score2: number) => {
@@ -90,8 +93,8 @@ export default function TournamentDashboard() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6 relative">
+          <TabsList className="grid w-full grid-cols-3 mb-6 sticky top-0 z-20 bg-background/95 backdrop-blur-sm shadow-sm py-1">
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               <span>Lịch Thi Đấu</span>
@@ -138,6 +141,11 @@ export default function TournamentDashboard() {
               </TabsList>
 
               <TabsContent value="group" className="mt-0 space-y-4">
+                <div className="flex justify-between items-center px-1">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Đã đấu {finishedGroupCount}/{groupMatches.length} trận
+                  </span>
+                </div>
                 {(() => {
                   const hasRounds = groupMatches.some(m => m.round !== undefined);
                   
@@ -166,6 +174,7 @@ export default function TournamentDashboard() {
                                   team1={team1}
                                   team2={team2}
                                   onSave={handleScoreUpdate}
+                                  isNext={match.id === nextMatchId}
                                 />
                               );
                             })}
@@ -184,6 +193,7 @@ export default function TournamentDashboard() {
                           team1={team1}
                           team2={team2}
                           onSave={handleScoreUpdate}
+                          isNext={match.id === nextMatchId}
                         />
                       );
                     });
@@ -221,6 +231,7 @@ export default function TournamentDashboard() {
                       team1={team1}
                       team2={team2}
                       onSave={handleScoreUpdate}
+                      isNext={match.id === nextMatchId}
                     />
                   );
                 })}
@@ -242,6 +253,7 @@ export default function TournamentDashboard() {
                         team1={team1}
                         team2={team2}
                         onSave={handleScoreUpdate}
+                        isNext={finalMatch.id === nextMatchId}
                       />
                     </div>
                   );
@@ -262,6 +274,7 @@ export default function TournamentDashboard() {
                         team1={team1}
                         team2={team2}
                         onSave={handleScoreUpdate}
+                        isNext={thirdPlaceMatch.id === nextMatchId}
                       />
                     </div>
                   );
@@ -282,6 +295,7 @@ export default function TournamentDashboard() {
                             team1={team1}
                             team2={team2}
                             onSave={handleScoreUpdate}
+                            isNext={match.id === nextMatchId}
                           />
                         );
                       })}
