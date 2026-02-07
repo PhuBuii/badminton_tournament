@@ -60,38 +60,41 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
           </p>
         </div>
 
-        {/* Player Count Info */}
-        <Card className="p-4 mb-4 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-center gap-3 text-sm md:text-base">
-            <Users className="w-5 h-5 text-primary" />
-            <span className="font-medium">
-              Số VĐV: <strong>{validPlayers.length}</strong> →{' '}
-              <strong>{totalTeams}</strong> đội →{' '}
-              <strong>{teamsPerGroup}</strong> đội/bảng
-            </span>
+        {/* Player Count Info & Controls */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col items-center justify-center py-2">
+            <div className="flex items-center gap-3 mb-1 text-primary">
+              <Users className="w-8 h-8" />
+              <span className="text-4xl font-bold tabular-nums tracking-tight">
+                {validPlayers.length}
+              </span>
+              <span className="text-lg font-medium text-muted-foreground self-end mb-1">VĐV</span>
+            </div>
+            <div className="text-sm font-medium text-muted-foreground bg-primary/5 border border-primary/10 px-4 py-1 rounded-full">
+              {totalTeams} đội • {teamsPerGroup} đội/bảng
+            </div>
           </div>
-        </Card>
 
-        {/* Player Count Controls */}
-        <div className="flex gap-3 mb-6">
-          <Button
-            onClick={() => addPlayers(2)}
-            variant="outline"
-            className="flex-1 touch-target"
-            disabled={players.length >= 16}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Thêm 2 người
-          </Button>
-          <Button
-            onClick={() => removePlayers(2)}
-            variant="outline"
-            className="flex-1 touch-target"
-            disabled={players.length <= 4}
-          >
-            <Minus className="w-4 h-4 mr-2" />
-            Bớt 2 người
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => addPlayers(2)}
+              variant="outline"
+              className="flex-1 touch-target"
+              disabled={players.length >= 16}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm 2 người
+            </Button>
+            <Button
+              onClick={() => removePlayers(2)}
+              variant="outline"
+              className="flex-1 touch-target"
+              disabled={players.length <= 4}
+            >
+              <Minus className="w-4 h-4 mr-2" />
+              Bớt 2 người
+            </Button>
+          </div>
         </div>
 
         {/* Options */}
