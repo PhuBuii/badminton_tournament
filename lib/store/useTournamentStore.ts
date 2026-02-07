@@ -188,11 +188,8 @@ export const useTournamentStore = create<TournamentStore>()(
             t.id === teamId ? { ...t, isDisqualified: true } : t
           );
 
-          // 2. Update all matches involving this team
+          // 2. Update all matches involving this team (both Group and Knockout)
           const updatedMatches = state.matches.map(m => {
-            // Only affect matches in the current stage (usually Group)
-            if (m.stage !== 'Group' && m.stage !== state.currentStage) return m;
-
             if (m.team1Id === teamId) {
               return { ...m, score1: 0, score2: 21, status: 'finished' as const };
             }
