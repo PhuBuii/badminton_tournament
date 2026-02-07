@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Match, Team } from '@/lib/types';
 import { Save, Check } from 'lucide-react';
+import { validateMatchScore } from '@/lib/utils/validateMatchScore';
 
 interface MatchCardProps {
   match: Match;
@@ -21,20 +22,14 @@ export default function MatchCard({ match, team1, team2, onSave }: MatchCardProp
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = () => {
-    const s1 = parseInt(score1);
-    const s2 = parseInt(score2);
+    const result = validateMatchScore(score1, score2);
 
-    if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) {
-      alert('Vui lòng nhập điểm số hợp lệ');
+    if (!result.valid) {
+      alert(result.error);
       return;
     }
 
-    if (s1 === s2) {
-      alert('Điểm số không thể hòa trong cầu lông. Vui lòng kiểm tra lại.');
-      return;
-    }
-
-    onSave(match.id, s1, s2);
+    onSave(match.id, result.s1, result.s2);
     setIsEditing(false);
   };
 
