@@ -155,7 +155,7 @@ export default function DrawAnimation({ onContinue }: { onContinue: () => void }
           >
             <Button
               onClick={onContinue}
-              className="w-full max-w-md mx-auto touch-target text-lg font-bold bg-primary hover:bg-primary/90"
+              className="w-full mx-auto touch-target text-lg font-bold bg-primary hover:bg-primary/90"
               size="lg"
             >
               <Sparkles className="w-5 h-5 mr-2" />

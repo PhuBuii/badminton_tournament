@@ -38,87 +38,56 @@ export function generateTournament(players: Player[]): Team[] {
 }
 
 function createTeams(players: Player[]): Team[] {
-  // Check if we have tier information
-  const hasTiers = players.some(p => p.tier !== undefined);
-  
-  if (!hasTiers) {
-    // Simple mode: random pairing
-    return simpleRandomPairing(players);
-  }
-
-  // Smart pairing mode with tiers
-  return smartTierPairing(players);
-}
-
-function simpleRandomPairing(players: Player[]): Team[] {
-  const shuffled = shuffleArray([...players]);
-  const teams: Team[] = [];
-
-  for (let i = 0; i < shuffled.length; i += 2) {
-    const player1 = shuffled[i];
-    const player2 = shuffled[i + 1];
-    const teamName = `${player1.name} & ${player2.name}`;
-    
-    teams.push({
-      id: `team-${i / 2 + 1}-${player1.id}-${player2.id}`, // Unique stable ID
-      players: [player1, player2],
-      group: 'A', // Will be reassigned later
-      points: 0,
-      scored: 0,
-      conceded: 0,
-      diff: 0,
-    });
-  }
-
-  return teams;
-}
-
-function smartTierPairing(players: Player[]): Team[] {
   const teams: Team[] = [];
   let teamCounter = 1;
 
   // Step 1: Handle fixed pairs first
   const fixedPairs = new Set<string>();
-  const remaining = [...players];
 
+  // We need to process fixed pairs from the original list
   for (const player of players) {
     if (player.isFixed && player.partnerId && !fixedPairs.has(player.id)) {
       const partner = players.find(p => p.id === player.partnerId);
-      if (partner && player.partnerId === partner.id && partner.partnerId === player.id) {
+      // Validate the partnership is mutual and exists
+      if (partner && partner.partnerId === player.id && !fixedPairs.has(partner.id)) {
         const player1 = player;
         const player2 = partner;
-        
+
         teams.push({
           id: `team-${teamCounter++}-${player1.id}-${player2.id}`,
           players: [player1, player2],
-          group: 'A',
+          group: 'A', // Will be reassigned
           points: 0,
           scored: 0,
           conceded: 0,
           diff: 0,
         });
-        fixedPairs.add(player.id);
-        fixedPairs.add(partner.id);
-        
-        // Remove from remaining
-        const idx1 = remaining.findIndex(p => p.id === player.id);
-        const idx2 = remaining.findIndex(p => p.id === partner.id);
-        if (idx1 > -1) remaining.splice(idx1, 1);
-        if (idx2 > -1) remaining.splice(idx2 > idx1 ? idx2 - 1 : idx2, 1);
+
+        fixedPairs.add(player1.id);
+        fixedPairs.add(player2.id);
       }
     }
   }
 
-  // Step 2: Pair remaining Strong with Weak
-  const strong = shuffleArray(remaining.filter(p => p.tier === 'Strong'));
-  const weak = shuffleArray(remaining.filter(p => p.tier === 'Weak'));
+  // Identify remaining players
+  const remaining = players.filter(p => !fixedPairs.has(p.id));
 
-  const minLength = Math.min(strong.length, weak.length);
-  
+  // Step 2: Handle Tiers (Strong vs Weak)
+  // We separate remaining players by tier
+  const strong = remaining.filter(p => p.tier === 'Strong');
+  const weak = remaining.filter(p => p.tier === 'Weak');
+  const others = remaining.filter(p => p.tier !== 'Strong' && p.tier !== 'Weak');
+
+  const shuffledStrong = shuffleArray(strong);
+  const shuffledWeak = shuffleArray(weak);
+
+  // Pair as many Strong with Weak as possible
+  const minLength = Math.min(shuffledStrong.length, shuffledWeak.length);
+
   for (let i = 0; i < minLength; i++) {
-    const player1 = strong[i];
-    const player2 = weak[i];
-    
+    const player1 = shuffledStrong[i];
+    const player2 = shuffledWeak[i];
+
     teams.push({
       id: `team-${teamCounter++}-${player1.id}-${player2.id}`,
       players: [player1, player2],
@@ -130,17 +99,24 @@ function smartTierPairing(players: Player[]): Team[] {
     });
   }
 
-  // Step 3: Handle remaining unpaired players (if any)
-  const unpaired = [
-    ...strong.slice(minLength),
-    ...weak.slice(minLength),
+  // Step 3: Handle all leftovers (unpaired Strong, unpaired Weak, and Others)
+  const leftoverStrong = shuffledStrong.slice(minLength);
+  const leftoverWeak = shuffledWeak.slice(minLength);
+
+  const allLeftovers = [
+    ...leftoverStrong,
+    ...leftoverWeak,
+    ...others
   ];
 
-  for (let i = 0; i < unpaired.length; i += 2) {
-    if (i + 1 < unpaired.length) {
-      const player1 = unpaired[i];
-      const player2 = unpaired[i + 1];
-      
+  const shuffledLeftovers = shuffleArray(allLeftovers);
+
+  // Pair them up randomly
+  for (let i = 0; i < shuffledLeftovers.length; i += 2) {
+    if (i + 1 < shuffledLeftovers.length) {
+      const player1 = shuffledLeftovers[i];
+      const player2 = shuffledLeftovers[i + 1];
+
       teams.push({
         id: `team-${teamCounter++}-${player1.id}-${player2.id}`,
         players: [player1, player2],
