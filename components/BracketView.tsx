@@ -300,9 +300,24 @@ export default function BracketView({ teams, matches, groupATeams, groupBTeams }
 
       {/* 3. Finals Section */}
       <div className="flex flex-col items-center gap-12 relative z-10">
-
+ {/* Third Place */}
+        <div className="flex flex-col items-center w-full max-w-sm scale-90 opacity-90">
+          <div className="mb-2 text-orange-600 flex items-center gap-2">
+            <Medal className="w-5 h-5" />
+            <span className="text-sm font-bold uppercase tracking-wider">Tranh Hạng 3</span>
+            </div>
+          <MatchNode
+            title="TRANH HẠNG 3"
+            match={thirdPlaceMatch}
+            placeholder1="Thua BK 1"
+            placeholder2="Thua BK 2"
+            variant="third"
+          />
+        </div>
         {/* Final */}
         <div className="flex flex-col items-center w-full max-w-md">
+          {/* Connector dotted up */}
+          <div className="absolute -top-12 left-1/2 w-0.5 h-12 border-l-2 border-dashed border-border -z-10" />
           <div className="mb-2 text-yellow-600 flex items-center gap-2 animate-bounce">
             <Trophy className="w-6 h-6" />
             <span className="text-base font-bold uppercase tracking-wider">Chung Kết</span>
@@ -317,22 +332,7 @@ export default function BracketView({ teams, matches, groupATeams, groupBTeams }
           />
         </div>
 
-        {/* Third Place */}
-        <div className="flex flex-col items-center w-full max-w-sm scale-90 opacity-90">
-          <div className="mb-2 text-orange-600 flex items-center gap-2">
-            <Medal className="w-5 h-5" />
-            <span className="text-sm font-bold uppercase tracking-wider">Tranh Hạng 3</span>
-            </div>
-          <MatchNode
-            title="TRANH HẠNG 3"
-            match={thirdPlaceMatch}
-            placeholder1="Thua BK 1"
-            placeholder2="Thua BK 2"
-            variant="third"
-          />
-          {/* Connector dotted up */}
-          <div className="absolute -top-12 left-1/2 w-0.5 h-12 border-l-2 border-dashed border-border -z-10" />
-        </div>
+       
 
       </div>
 

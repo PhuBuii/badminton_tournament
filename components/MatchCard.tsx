@@ -124,6 +124,7 @@ export default function MatchCard({ match, team1, team2, onSave, isNext = false 
               className="w-16 h-12 text-center text-lg font-bold"
               placeholder="0"
               min="0"
+              max="30"
             />
           )}
         </div>
@@ -158,10 +159,18 @@ export default function MatchCard({ match, team1, team2, onSave, isNext = false 
               className="w-16 h-12 text-center text-lg font-bold"
               placeholder="0"
               min="0"
+              max="30"
             />
           )}
         </div>
       </div>
+
+      {/* Score Hint */}
+      {!isFinished && (
+        <div className="text-xs text-muted-foreground text-center mb-3">
+          💡 Luật 21 điểm: Thắng tối thiểu 21, cách biệt 2 điểm (VD: 21-19, 22-20, 30-29)
+        </div>
+      )}
 
       {/* Action Buttons */}
       {!isFinished ? (
