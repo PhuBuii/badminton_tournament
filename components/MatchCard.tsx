@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,13 @@ export default function MatchCard({ match, team1, team2, onSave, isNext = false 
   const [score1, setScore1] = useState(match.score1?.toString() || '');
   const [score2, setScore2] = useState(match.score2?.toString() || '');
   const [isEditing, setIsEditing] = useState(false);
+
+  // Reset state when match prop changes
+  useEffect(() => {
+    setScore1(match.score1?.toString() || '');
+    setScore2(match.score2?.toString() || '');
+    setIsEditing(false);
+  }, [match.id, match.score1, match.score2]);
 
   const handleSave = () => {
     const result = validateMatchScore(score1, score2);
@@ -47,10 +54,10 @@ export default function MatchCard({ match, team1, team2, onSave, isNext = false 
 
   return (
     <Card className={`p-4 ${
-      isFinished 
-        ? 'bg-muted/40 opacity-75 shadow-none border-transparent' 
-        : isNext 
-          ? 'court-card animate-border-pulse ring-offset-2 ring-offset-background' 
+      isFinished
+        ? 'bg-muted/40 opacity-75 shadow-none border-transparent'
+        : isNext
+          ? 'court-card animate-border-pulse ring-offset-2 ring-offset-background'
           : 'court-card'
     }`}>
       {/* Match Header */}

@@ -9,7 +9,15 @@ import MatchCard from './MatchCard';
 import Leaderboard from './Leaderboard';
 import ResetButton from './ResetButton';
 import BracketView from './BracketView';
-import { Trophy, Calendar, Eye } from 'lucide-react';
+import { Trophy, Calendar, Eye, ArrowUp, Flag, Crown } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function TournamentDashboard() {
   const {
@@ -38,32 +46,39 @@ export default function TournamentDashboard() {
   const canStartKnockout = allGroupFinished && semiMatches.length === 0;
 
   const finishedGroupCount = groupMatches.filter(m => m.status === 'finished').length;
-  const nextMatchId = matches.find(m => m.status !== 'finished')?.id;
+  // Get next 2 matches
+  const nextMatches = matches.filter(m => m.status !== 'finished').slice(0, 2);
+  // Keep compatibility for other checks
+  const nextMatch = nextMatches[0];
+  const nextMatchId = nextMatch?.id;
 
   const getTeam = (id: string) => teams.find(t => t.id === id);
 
+  // Status for Manual Transitions
+  const allSemiFinished = semiMatches.length > 0 && semiMatches.every(m => m.status === 'finished');
+  const canStartFinals = allSemiFinished && !finalMatch;
+
+  // Confirmation Modal State
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    action: () => void;
+  }>({ title: '', description: '', action: () => { } });
+
+  const handleConfirmAction = (title: string, description: string, action: () => void) => {
+    setConfirmConfig({ title, description, action });
+    setConfirmOpen(true);
+  };
+
+  const onConfirm = () => {
+    confirmConfig.action();
+    setConfirmOpen(false);
+  };
+
   const handleScoreUpdate = (matchId: string, score1: number, score2: number) => {
     updateMatchScore(matchId, score1, score2);
-
-    // Auto-advance logic
-    setTimeout(() => {
-      const { matches } = useTournamentStore.getState();
-      const groupMatches = matches.filter(m => m.stage === 'Group');
-      const semiMatches = matches.filter(m => m.stage === 'Semi');
-      
-      if (groupMatches.every(m => m.status === 'finished') && semiMatches.length === 0) {
-        // Ready for knockout but don't auto-advance
-      } else if (semiMatches.length > 0 && semiMatches.every(m => m.status === 'finished')) {
-        const finalMatch = matches.find(m => m.stage === 'Final');
-        if (!finalMatch) {
-          try {
-            completeKnockout();
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      }
-    }, 500);
+  // Auto-advance removed to favor manual transitions
   };
 
   return (
@@ -103,34 +118,108 @@ export default function TournamentDashboard() {
             </TabsTrigger>
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
-              <span>Tổng quan</span>
+              <span>Sơ đồ giải</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            <Tabs 
-              defaultValue={finalMatch || thirdPlaceMatch || placementMatches.length > 0 ? "final" : semiMatches.length > 0 ? "semi" : "group"} 
+
+            {/* Start Knockout Button (Top) */}
+            {canStartKnockout && (
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 text-center shadow-sm animate-in fade-in zoom-in duration-500">
+                <h3 className="text-xl font-bold text-primary mb-2">🎉 Vòng Bảng Đã Kết Thúc!</h3>
+                <p className="text-muted-foreground mb-4">Các đội đã thi đấu xong. Sẵn sàng bốc thăm vòng Knockout?</p>
+                <Button
+                  onClick={() => handleConfirmAction(
+                    'Bắt Đầu Vòng Knockout?',
+                    'Hệ thống sẽ bốc thăm các cặp đấu Bán Kết dựa trên xếp hạng vòng bảng. Hành động này không thể hoàn tác.',
+                    () => advanceToKnockout()
+                  )}
+                  className="w-full md:w-auto touch-target text-lg font-bold bg-primary hover:bg-primary/90 shadow-lg animate-pulse"
+                  size="lg"
+                >
+                  <Trophy className="w-5 h-5 mr-2" />
+                  Bắt Đầu Vòng Knockout
+                </Button>
+              </div>
+            )}
+
+            {/* Start Finals Button (Top) */}
+            {canStartFinals && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-6 text-center shadow-sm animate-in fade-in zoom-in duration-500">
+                <h3 className="text-xl font-bold text-yellow-600 mb-2">🔥 Bán Kết Đã Kết Thúc!</h3>
+                <p className="text-muted-foreground mb-4">Hai đội mạnh nhất đã lộ diện. Sẵn sàng cho trận Chung Kết trong mơ?</p>
+                <Button
+                  onClick={() => handleConfirmAction(
+                    'Bắt Đầu Vòng Chung Kết?',
+                    'Hệ thống sẽ tạo trận Chung Kết và Tranh Hạng 3. Bạn đã sẵn sàng chưa?',
+                    () => completeKnockout()
+                  )}
+                  className="w-full md:w-auto touch-target text-lg font-bold bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg animate-pulse"
+                  size="lg"
+                >
+                  <Crown className="w-5 h-5 mr-2" />
+                  Bắt Đầu Chung Kết
+                </Button>
+              </div>
+            )}
+
+            {/* Upcoming Match Highlight */}
+            {nextMatches.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                  </div>
+                  <span className="font-bold text-primary">TRẬN ĐẤU SẮP DIỄN RA ({nextMatches.length})</span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {nextMatches.map(match => {
+                    const team1 = getTeam(match.team1Id);
+                    const team2 = getTeam(match.team2Id);
+                    if (!team1 || !team2) return null;
+
+                    return (
+                      <div key={match.id} className="bg-primary/5 border border-primary/20 rounded-xl p-4 shadow-sm h-full">
+                        <MatchCard
+                          match={match}
+                          team1={team1}
+                          team2={team2}
+                          onSave={handleScoreUpdate}
+                          isNext={true}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <Tabs
+              defaultValue={finalMatch || thirdPlaceMatch || placementMatches.length > 0 ? "final" : semiMatches.length > 0 ? "semi" : "group"}
               className="w-full"
             >
               <TabsList className="flex w-full justify-start gap-2 bg-transparent p-0 mb-4 overflow-x-auto no-scrollbar">
-                <TabsTrigger 
-                  value="group" 
+                <TabsTrigger
+                  value="group"
                   className="rounded-full border bg-background data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 h-8 text-xs sm:text-sm shadow-sm"
                 >
                   Vòng bảng
                 </TabsTrigger>
                 {semiMatches.length > 0 && (
-                  <TabsTrigger 
-                    value="semi" 
+                  <TabsTrigger
+                    value="semi"
                     className="rounded-full border bg-background data-[state=active]:bg-amber-500 data-[state=active]:text-white px-4 h-8 text-xs sm:text-sm shadow-sm"
                   >
                     Bán kết
                   </TabsTrigger>
                 )}
                 {(finalMatch || thirdPlaceMatch || placementMatches.length > 0) && (
-                  <TabsTrigger 
-                    value="final" 
+                  <TabsTrigger
+                    value="final"
                     className="rounded-full border bg-background data-[state=active]:bg-yellow-500 data-[state=active]:text-white px-4 h-8 text-xs sm:text-sm shadow-sm"
                   >
                     Chung kết
@@ -146,7 +235,7 @@ export default function TournamentDashboard() {
                 </div>
                 {(() => {
                   const hasRounds = groupMatches.some(m => m.round !== undefined);
-                  
+
                   if (hasRounds) {
                     const rounds = groupMatches.reduce((acc, match) => {
                       const r = match.round || 0;
@@ -310,12 +399,49 @@ export default function TournamentDashboard() {
             <Leaderboard teams={groupBTeams} group="B" />
           </TabsContent>
 
-          {/* Overview Tab */}
+          {/* Bracket Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <BracketView teams={teams} matches={matches} />
+            <BracketView
+              teams={teams}
+              matches={matches}
+              groupATeams={groupATeams}
+              groupBTeams={groupBTeams}
+            />
           </TabsContent>
         </Tabs>
+
+        {/* Scroll to Top Button */}
+        {nextMatch && (
+          <Button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg w-12 h-12 p-0 bg-primary hover:bg-primary/90 hover:scale-110 transition-all duration-300"
+            size="icon"
+            aria-label="Lên đầu trang"
+          >
+            <ArrowUp className="w-6 h-6" />
+          </Button>
+        )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{confirmConfig.title}</DialogTitle>
+            <DialogDescription>
+              {confirmConfig.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Hủy
+            </Button>
+            <Button onClick={onConfirm}>
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
