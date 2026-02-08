@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { Player, Team, Match, TournamentState, TournamentConfig } from '../types';
 import { generateTournament } from '../utils/drawEngine';
 import { generateGroupMatches, generateKnockoutMatches, generateFinalMatches } from '../utils/matchScheduler';
+import { hasCustomSchedule, getDefault7TeamSchedule, resolveSchedule } from '../utils/scheduleEngine';
 import { calculateRanking } from '../utils/rankingCalculator';
 
 interface TournamentStore {
@@ -21,6 +22,7 @@ interface TournamentStore {
   removePlayer: (id: string) => void;
   addPlayers: (count: number) => void;
   removePlayers: (count: number) => void;
+  importPlayers: (names: string[]) => void;
   setUseTiers: (use: boolean) => void;
   setUseFixedPairs: (use: boolean) => void;
   
@@ -89,6 +91,15 @@ export const useTournamentStore = create<TournamentStore>()(
         }));
       },
 
+      importPlayers: (names) => {
+        if (names.length === 0) return;
+        const newPlayers = names.map((name, i) => ({
+          id: `player-${Date.now()}-${i}`,
+          name,
+        }));
+        set({ players: newPlayers });
+      },
+
       setUseTiers: (use) => {
         set({ useTiers: use });
         if (!use) {
@@ -128,7 +139,15 @@ export const useTournamentStore = create<TournamentStore>()(
           const teams = generateTournament(validPlayers);
           
           // Generate group stage matches
-          const matches = generateGroupMatches(teams);
+          const teamsA = teams.filter(t => t.group === 'A').length;
+          const teamsB = teams.filter(t => t.group === 'B').length;
+
+          let matches: Match[];
+          if (hasCustomSchedule(teamsA, teamsB)) {
+            matches = resolveSchedule(getDefault7TeamSchedule(), teams);
+          } else {
+            matches = generateGroupMatches(teams);
+          }
 
           const config: TournamentConfig = {
             totalPlayers: validPlayers.length,

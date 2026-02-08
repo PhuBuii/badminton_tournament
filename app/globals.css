@@ -172,4 +172,19 @@
   .highlight-lime {
     @apply bg-accent text-accent-foreground font-semibold;
   }
+
+  @keyframes border-pulse {
+    0%, 100% {
+      border-color: oklch(0.45 0.15 152 / 0.5);
+      box-shadow: 0 0 0 0px oklch(0.45 0.15 152 / 0.2);
+    }
+    50% {
+      border-color: oklch(0.88 0.12 120);
+      box-shadow: 0 0 0 4px oklch(0.88 0.12 120 / 0.4);
+    }
+  }
+
+  .animate-border-pulse {
+    animation: border-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }

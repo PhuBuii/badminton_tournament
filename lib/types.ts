@@ -10,6 +10,7 @@ export interface Team {
   id: string;
   players: [Player, Player];
   group: 'A' | 'B';
+  teamNumber?: string; // "A1", "B3" etc.
   points: number;
   scored: number;
   conceded: number;
@@ -21,6 +22,7 @@ export interface Match {
   id: string;
   stage: 'Group' | 'Semi' | 'Final' | 'ThirdPlace' | 'Placement';
   round?: number;
+  court?: number;
   team1Id: string;
   team2Id: string;
   score1?: number;
