@@ -85,13 +85,13 @@ export default function BracketView({ teams, matches, groupATeams, groupBTeams }
                     return (
                       <div key={m.id} className="px-3 py-2 grid grid-cols-[1fr_auto_1fr] gap-3 items-center text-xs border-b last:border-0 border-border/50 hover:bg-muted/20 transition-colors">
                         <div className={cn("text-right truncate font-medium", m.status === 'finished' && m.score1! > m.score2! && "text-emerald-600 font-bold")}>
-                          {t1.players[0].name}&{t1.players[1].name}
+                          {t1.players[0].name} & {t1.players[1].name}
                         </div>
                         <div className="px-2 py-0.5 font-mono font-bold whitespace-nowrap bg-muted/50 rounded min-w-[40px] text-center">
                           {m.status === 'finished' ? `${m.score1}-${m.score2}` : 'vs'}
                         </div>
                         <div className={cn("text-left truncate font-medium", m.status === 'finished' && m.score2! > m.score1! && "text-emerald-600 font-bold")}>
-                          {t2.players[0].name}&{t2.players[1].name}
+                          {t2.players[0].name} & {t2.players[1].name}
                         </div>
                       </div>
                     );
@@ -332,7 +332,7 @@ export default function BracketView({ teams, matches, groupATeams, groupBTeams }
           />
         </div>
 
-       
+
 
       </div>
 

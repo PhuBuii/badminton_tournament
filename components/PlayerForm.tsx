@@ -14,7 +14,8 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Plus, Minus, Users, Zap, FileText } from 'lucide-react';
+import { Plus, Minus, Users, Zap, ChevronUp, ChevronDown } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { Player } from '@/lib/types';
 
@@ -39,16 +40,18 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
   );
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
+  const [showManualEntry, setShowManualEntry] = useState(true);
+
   const validPlayers = players.filter(p => p.name.trim() !== '');
   const totalTeams = validPlayers.length / 2;
   const teamsPerGroup = Math.ceil(totalTeams / 2); // Allow odd teams, A gets extra
 
   // Calculate unpaired and paired players for the 2-column UI
   const unpairedPlayers = validPlayers.filter(p => !p.partnerId);
-  
+
   const pairedGroups: [Player, Player][] = [];
   const processedPairedIds = new Set<string>();
-  
+
   validPlayers.forEach(p => {
     if (p.partnerId && !processedPairedIds.has(p.id)) {
       const partner = validPlayers.find(v => v.id === p.partnerId);
@@ -76,7 +79,7 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
       // Pair them
       const p1 = selectedPlayerId;
       const p2 = playerId;
-      
+
       updatePlayer(p1, { partnerId: p2, isFixed: true });
       updatePlayer(p2, { partnerId: p1, isFixed: true });
       setSelectedPlayerId(null);
@@ -93,14 +96,15 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
   const handleImport = () => {
     try {
       const names = JSON.parse(importText);
-      
+
       if (!Array.isArray(names) || names.length === 0 || !names.every(n => typeof n === 'string')) {
         alert('Dữ liệu không hợp lệ. Vui lòng nhập mảng JSON tên VĐV.');
         return;
       }
-      
+
       importPlayers(names);
       setImportOpen(false);
+      setShowManualEntry(false); // Auto-collapse manual entry after import
     } catch (error) {
       alert('Dữ liệu không hợp lệ. Vui lòng nhập mảng JSON tên VĐV.');
     }
@@ -114,6 +118,7 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
       generateDraw();
       setTimeout(() => {
         setLoading(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         onGenerate();
       }, 500);
     } catch (error) {
@@ -142,7 +147,6 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
             variant="outline"
             className="w-full touch-target"
           >
-            <FileText className="w-4 h-4 mr-2" />
             📋 Nhập Nhanh Danh Sách
           </Button>
         </div>
@@ -171,8 +175,8 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
           </DialogContent>
         </Dialog>
 
-        {/* Player Count Info & Controls */}
-        <div className="flex flex-col gap-4 mb-6">
+        {/* Player Count Info */}
+        <div className="flex flex-col gap-4 mb-4">
           <div className="flex flex-col items-center justify-center py-2">
             <div className="flex items-center gap-3 mb-1 text-primary">
               <Users className="w-8 h-8" />
@@ -184,27 +188,6 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
             <div className="text-sm font-medium text-muted-foreground bg-primary/5 border border-primary/10 px-4 py-1 rounded-full">
               {totalTeams} đội • {teamsPerGroup} đội/bảng
             </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button
-              onClick={() => addPlayers(2)}
-              variant="outline"
-              className="flex-1 touch-target"
-              disabled={players.length >= 16}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm 2 người
-            </Button>
-            <Button
-              onClick={() => removePlayers(2)}
-              variant="outline"
-              className="flex-1 touch-target"
-              disabled={players.length <= 4}
-            >
-              <Minus className="w-4 h-4 mr-2" />
-              Bớt 2 người
-            </Button>
           </div>
         </div>
 
@@ -241,60 +224,108 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
           </label>
         </div>
 
-        {/* Player Inputs */}
-        <div className="space-y-3 mb-6">
-          {players.map((player, index) => (
-            <Card key={player.id} className="p-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="w-8 h-8 flex items-center justify-center shrink-0">
-                    {index + 1}
-                  </Badge>
-                  <Input
-                    placeholder={`Tên VĐV ${index + 1}`}
-                    value={player.name}
-                    onChange={(e) =>
-                      updatePlayer(player.id, { name: e.target.value })
-                    }
-                    className="flex-1 touch-target"
-                  />
-                </div>
+        {/* Manual Input Toggle */}
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => setShowManualEntry(!showManualEntry)}
+            className="w-full flex items-center justify-between p-2 hover:bg-transparent group"
+          >
+            <span className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
+              {showManualEntry ? 'Thu gọn chỉnh sửa thủ công' : 'Chỉnh sửa tên & Số lượng thủ công'}
+            </span>
+            {showManualEntry ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+            )}
+          </Button>
 
-                {useTiers && (
-                  <div className="flex gap-2 pl-11">
-                    <Button
-                      size="sm"
-                      variant={player.tier === 'Strong' ? 'default' : 'outline'}
-                      onClick={() =>
-                        updatePlayer(player.id, { tier: 'Strong' })
-                      }
-                      className="flex-1 touch-target"
-                    >
-                      💪 Mạnh
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={player.tier === 'Weak' ? 'default' : 'outline'}
-                      onClick={() =>
-                        updatePlayer(player.id, { tier: 'Weak' })
-                      }
-                      className="flex-1 touch-target"
-                    >
-                      🎯 Yếu
-                    </Button>
-                  </div>
-                )}
-
+          {/* Collapsible Content */}
+          <div className={cn(
+            "grid transition-all duration-300 ease-in-out overflow-hidden",
+            showManualEntry ? "grid-rows-[1fr] opacity-100 mb-6" : "grid-rows-[0fr] opacity-0"
+          )}>
+            <div className="min-h-0">
+              {/* Manual Add/Remove Controls */}
+              <div className="flex gap-3 mb-4">
+                <Button
+                  onClick={() => addPlayers(2)}
+                  variant="outline"
+                  className="flex-1 touch-target"
+                  disabled={players.length >= 16}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Thêm 2 người
+                </Button>
+                <Button
+                  onClick={() => removePlayers(2)}
+                  variant="outline"
+                  className="flex-1 touch-target"
+                  disabled={players.length <= 4}
+                >
+                  <Minus className="w-4 h-4 mr-2" />
+                  Bớt 2 người
+                </Button>
               </div>
-            </Card>
-          ))}
+
+              {/* Player INPUTS list */}
+              <div className="space-y-3">
+                {players.map((player, index) => (
+                  <Card key={player.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="secondary" className="w-8 h-8 flex items-center justify-center shrink-0">
+                          {index + 1}
+                        </Badge>
+                        <Input
+                          placeholder={`Tên VĐV ${index + 1}`}
+                          value={player.name}
+                          onChange={(e) =>
+                            updatePlayer(player.id, { name: e.target.value })
+                          }
+                          className="flex-1 touch-target"
+                        />
+                      </div>
+
+                      {useTiers && (
+                        <div className="flex gap-2 pl-11">
+                          <Button
+                            size="sm"
+                            variant={player.tier === 'Strong' ? 'default' : 'outline'}
+                            onClick={() =>
+                              updatePlayer(player.id, { tier: 'Strong' })
+                            }
+                            className="flex-1 touch-target"
+                          >
+                            💪 Mạnh
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={player.tier === 'Weak' ? 'default' : 'outline'}
+                            onClick={() =>
+                              updatePlayer(player.id, { tier: 'Weak' })
+                            }
+                            className="flex-1 touch-target"
+                          >
+                            🎯 Yếu
+                          </Button>
+                        </div>
+                      )}
+
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Fixed Pairs Selection UI - Two Column Layout */}
         {useFixedPairs && validPlayers.length > 0 && (
           <div className="court-card p-4 mb-6">
             <h3 className="text-lg font-bold text-primary mb-4">Ghép cặp cố định</h3>
-            
+
             <div className="grid grid-cols-2 gap-4">
               {/* Left Column: Unpaired */}
               <div className="space-y-2">
@@ -307,8 +338,8 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
                       key={p.id}
                       onClick={() => handlePlayerTap(p.id)}
                       className={cn(
-                        "px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer touch-target transition-all",
-                        selectedPlayerId === p.id 
+                        "px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer touch-target transition-all flex items-center",
+                        selectedPlayerId === p.id
                           ? "ring-2 ring-primary bg-primary/10 border-primary"
                           : "bg-secondary/50 border-transparent hover:bg-secondary"
                       )}
@@ -334,12 +365,12 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
                     <div
                       key={p1.id}
                       onClick={() => handleUnpair(p1, p2)}
-                      className="flex flex-col gap-1 p-2 rounded-lg bg-emerald-50 border border-emerald-200 cursor-pointer touch-target hover:bg-emerald-100 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 cursor-pointer touch-target hover:bg-emerald-100 transition-colors flex items-center justify-center"
                     >
-                      <div className="text-sm font-bold text-emerald-800 flex items-center gap-1">
-                        <span className="truncate max-w-[45%]">{p1.name}</span>
+                      <div className="text-sm font-bold text-emerald-800 flex items-center justify-center gap-2 w-full">
+                        <span className="truncate max-w-[42%] text-right mb-0">{p1.name}</span>
                         <span className="text-emerald-500 shrink-0">🔗</span>
-                        <span className="truncate max-w-[45%]">{p2.name}</span>
+                        <span className="truncate max-w-[42%] text-left mb-0">{p2.name}</span>
                       </div>
                     </div>
                   ))}
@@ -351,7 +382,7 @@ export default function PlayerForm({ onGenerate }: { onGenerate: () => void }) {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-4 text-xs text-muted-foreground bg-primary/5 p-2 rounded border border-primary/10">
               💡 Chạm vào tên để chọn/ghép cặp. Chạm vào cặp đã ghép để hủy.
             </div>

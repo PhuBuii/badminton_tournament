@@ -173,7 +173,7 @@ export default function TournamentDashboard() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
                   </div>
-                  <span className="font-bold text-primary">TRẬN ĐẤU SẮP DIỄN RA ({nextMatches.length})</span>
+                  <span className="font-bold text-primary">TRẬN ĐẤU ĐANG TIẾN HÀNH ({nextMatches.length})</span>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">

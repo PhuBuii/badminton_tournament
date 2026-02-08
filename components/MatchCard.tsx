@@ -85,7 +85,7 @@ export default function MatchCard({ match, team1, team2, onSave, isNext = false 
           )}
           {isNext && !isFinished && (
             <Badge className="bg-accent text-accent-foreground animate-pulse ml-1">
-              Sắp đấu
+              Đang thi đấu
             </Badge>
           )}
         </div>

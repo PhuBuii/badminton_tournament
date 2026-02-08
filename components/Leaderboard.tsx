@@ -11,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Team } from '@/lib/types';
-import { Trophy, Medal, UserX } from 'lucide-react';
+import { UserX } from 'lucide-react';
 import { useTournamentStore } from '@/lib/store/useTournamentStore';
 import { areGroupMatchesComplete } from '@/lib/utils/groupCompletion';
 
@@ -84,10 +84,8 @@ export default function Leaderboard({ teams, group }: LeaderboardProps) {
                   className={qualified ? 'bg-emerald-50 border-l-4 border-emerald-500 font-medium' : ''}
                 >
                   <TableCell className="font-semibold">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center font-bold text-gray-700">
                       {index + 1}
-                      {index === 0 && <Trophy className="w-4 h-4 text-yellow-500" />}
-                      {index === 1 && <Medal className="w-4 h-4 text-gray-400" />}
                     </div>
                   </TableCell>
                   <TableCell>

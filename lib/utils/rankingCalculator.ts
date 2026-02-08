@@ -112,13 +112,13 @@ export function calculateAwards(
 
   // Find final match
   const finalMatch = allMatches.find(m => m.stage === 'Final' && m.status === 'finished');
-  
+
   if (finalMatch && finalMatch.score1 !== undefined && finalMatch.score2 !== undefined) {
-    const championId = finalMatch.score1 > finalMatch.score2 
-      ? finalMatch.team1Id 
+    const championId = finalMatch.score1 > finalMatch.score2
+      ? finalMatch.team1Id
       : finalMatch.team2Id;
-    const runnerUpId = finalMatch.score1 > finalMatch.score2 
-      ? finalMatch.team2Id 
+    const runnerUpId = finalMatch.score1 > finalMatch.score2
+      ? finalMatch.team2Id
       : finalMatch.team1Id;
 
     awards.push({ teamId: championId, prize: '300,000 VND 🏆', rank: 1 });
@@ -134,16 +134,16 @@ export function calculateAwards(
 
   // 3rd-4th in group stage
   if (groupATeams[2]) {
-    awards.push({ teamId: groupATeams[2].id, prize: 'Quà lưu niệm 💛', rank: 5 });
+    awards.push({ teamId: groupATeams[2].id, prize: '💛', rank: 5 });
   }
   if (groupATeams[3]) {
-    awards.push({ teamId: groupATeams[3].id, prize: 'Quà lưu niệm 💛', rank: 6 });
+    awards.push({ teamId: groupATeams[3].id, prize: '💛', rank: 6 });
   }
   if (groupBTeams[2]) {
-    awards.push({ teamId: groupBTeams[2].id, prize: 'Quà lưu niệm 💛', rank: 5 });
+    awards.push({ teamId: groupBTeams[2].id, prize: '💛', rank: 5 });
   }
   if (groupBTeams[3]) {
-    awards.push({ teamId: groupBTeams[3].id, prize: 'Quà lưu niệm 💛', rank: 6 });
+    awards.push({ teamId: groupBTeams[3].id, prize: '💛', rank: 6 });
   }
 
   return awards;
